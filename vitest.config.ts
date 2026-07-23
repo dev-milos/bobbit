@@ -50,6 +50,11 @@ const shared = {
 	},
 };
 const tier1SetupFiles = ["tests2/harness/tier1-spawn-guard.ts"];
+// isolate:false projects share one module graph per fork, so process-level
+// singletons (project root, agent-dir state, BOBBIT_* env) leak across files.
+// This runner restores the baseline before each file is imported — see the
+// rationale in the runner file. Isolated projects reset per file already.
+const fileBoundaryRunner = "tests2/harness/file-boundary-runner.ts";
 
 const coverage = {
 	provider: "v8" as const,
@@ -99,6 +104,7 @@ export default defineConfig({
 					...shared,
 					name: "v2-core",
 					environment: "node",
+					runner: fileBoundaryRunner,
 					setupFiles: tier1SetupFiles,
 					include: execution.core,
 				},
@@ -123,6 +129,7 @@ export default defineConfig({
 					...shared,
 					name: "v2-integration",
 					environment: "node",
+					runner: fileBoundaryRunner,
 					setupFiles: tier1SetupFiles,
 					include: execution.integration,
 					testTimeout: 60_000,
